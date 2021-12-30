@@ -1,0 +1,37 @@
+GET http://localhost:8000/posts
+###
+GET http://localhost:8000/posts/details/61cc4bb7ada85c25e7c3ca4a
+###
+POST http://localhost:8000/events
+Content-Type: application/json
+
+{
+    "title": "Hi",
+    "date" : "H",
+    "time" : "H",
+    "venue": "H"
+}
+###
+DELETE http://localhost:8000/events/61c8803e7f04d8fea7e094d7
+Content-Type: application/json
+
+{
+    "_id": "61c8803e7f04d8fea7e094d7",
+    "title": "Event 1",
+    "date": "2022-01-27",
+    "time": "11:47",
+    "venue": "Venue 1",
+    "__v": 0
+  }
+###
+PUT http://localhost:8000/events/61c8802b7f04d8fea7e094d5
+Content-Type: application/json
+
+{
+    "_id": "61c8802b7f04d8fea7e094d5",
+    "title": "Event 5",
+    "date": "2022-01-27",
+    "time": "11:47",
+    "venue": "Venue 1",
+    "__v": 0
+  }
