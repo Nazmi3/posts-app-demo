@@ -40,11 +40,11 @@ const Postdetails = () => {
 
   const onAddComment = async (e) => {
     e.preventDefault()
-    // run in demo only
-    alert('Comment added')
+    // run in demo only, update by state instead of http or websocket events
     addcommentref.current.close()
-    // update by state instead of http or websocket events
     setdemodatabase({...demodatabase, comments: [...demodatabase.comments, newcomment]})
+    alert('Comment added')
+
     // not run in non-demo only
     return
     // post id hardcoded for demo only, should get from database post id
