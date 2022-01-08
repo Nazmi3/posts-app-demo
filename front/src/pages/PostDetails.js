@@ -10,7 +10,6 @@ const Postdetails = () => {
   const [isAdministrator, setisAdministrator] = useState(localStorage.getItem('posts-app-demo.administrator'));
   const [demodatabase, setdemodatabase] = useState({
     post: {},
-    details: "",
     comments: []
   });
 
