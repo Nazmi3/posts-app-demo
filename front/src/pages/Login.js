@@ -8,6 +8,10 @@ const Login = ({updateState}) => {
     const [password, setpassword] = useState('');
 
     async function loginUser(credentials) {
+        // for demo
+        return {token: "tokenexample", isadmin: true}
+
+        // for non-demo
         return fetch('http://localhost:8000/login', {
           method: 'POST',
           headers: {

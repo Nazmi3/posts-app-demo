@@ -1,4 +1,4 @@
-import React, { createRef, useState } from 'react';
+import React, { createRef, useState, useEffect } from 'react';
 import Popup from 'reactjs-popup';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 
@@ -9,13 +9,9 @@ const Postdetails = () => {
 
   const [isAdministrator, setisAdministrator] = useState(localStorage.getItem('posts-app-demo.administrator'));
   const [demodatabase, setdemodatabase] = useState({
-    post: {"_id":"61ce3346ada85c25e7c3ca5f", "title":"Title 1", "details":"Details 1"},
+    post: {},
     details: "",
-    comments: [ 
-      { "id" : "ttr", "commenter" : "user 1", "comment" : "Good" }, 
-      { "id" : "tts", "commenter" : "user 2", "comment" : "Good 2" }, 
-      { "id" : "ttt", "commenter" : "user 3", "comment" : "Good 3" } 
-    ]
+    comments: []
   });
 
   const [commenttodelete, setcommenttodelete] = useState({});
@@ -125,13 +121,27 @@ const Postdetails = () => {
   }
 
   const updateDetails = async () => {
-    console.log('get details')
+    // for demo
+    setdemodatabase({
+        post: {"_id":"61ce3346ada85c25e7c3ca5f", "title":"Title 1", "details":"Details 1"},
+        details: "",
+        comments: [ 
+          { "id" : "ttr", "commenter" : "user 1", "comment" : "Good" }, 
+          { "id" : "tts", "commenter" : "user 2", "comment" : "Good 2" }, 
+          { "id" : "ttt", "commenter" : "user 3", "comment" : "Good 3" } 
+        ]
+    })
     //for non-demo
     return
-    let response = await myfetch('http://localhost:8000/posts/details/myid', 'GET', {})
+    let response = await myfetch('http://localhost:8000/posts/details/postid', 'GET', {})
     if (response.status === 200) setdemodatabase(response.json())
     else alert('Error:' + response.status)
   }
+
+  // update post details once component mounted only
+  useEffect(() => {
+      updateDetails()
+  }, []);
 
   return (
     <div className='mybox' style={{position:'relative', width:'90%'}}>

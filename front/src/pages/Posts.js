@@ -169,10 +169,7 @@ const Posts = () => {
                 {Object.keys(posts).map((key, i)=>{
                     console.log('map', posts[key])
                     return (
-                        <div className='mybox clickable' key={posts[key].id} onClick={()=>{
-                            navigate('/posts/details?id='+posts[key].id)
-                            //window.location.href='/posts/details?id='+posts[key]._id
-                            }}>
+                        <div className='mybox clickable' key={posts[key].id} onClick={()=>{navigate('/posts/details?id='+posts[key].id)}}>
                             <div className='postTitle'>{posts[key].title}</div>
                             <div className='postDate'>{posts[key].body}</div>
                            
