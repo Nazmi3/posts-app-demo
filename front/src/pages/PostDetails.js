@@ -1,346 +1,262 @@
-import React, { Component, createRef } from 'react';
-import { w3cwebsocket as W3CWebSocket } from 'websocket'
+import React, { createRef, useState } from 'react';
 import Popup from 'reactjs-popup';
-import 'reactjs-popup/dist/index.css'
-import 'react-tiny-fab/dist/styles.css';
-import moment from 'moment';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 
-const client = new W3CWebSocket('ws://127.0.0.1:8000?token=' + localStorage.getItem('posts-app-demo.token'))
+import 'reactjs-popup/dist/index.css'
+import 'react-tiny-fab/dist/styles.css';
 
-class PostDetails extends Component {
+const Postdetails = () => {
 
-    constructor(props) {
-        super(props)
+  const [isAdministrator, setisAdministrator] = useState(localStorage.getItem('posts-app-demo.administrator'));
+  const [demodatabase, setdemodatabase] = useState({
+    post: {"_id":"61ce3346ada85c25e7c3ca5f", "title":"Title 1", "details":"Details 1"},
+    details: "",
+    comments: [ 
+      { "id" : "ttr", "commenter" : "user 1", "comment" : "Good" }, 
+      { "id" : "tts", "commenter" : "user 2", "comment" : "Good 2" }, 
+      { "id" : "ttt", "commenter" : "user 3", "comment" : "Good 3" } 
+    ]
+  });
 
+  const [commenttodelete, setcommenttodelete] = useState({});
+  const [editedpost, seteditedpost] = useState({});
+  const [editedcomment, seteditedcomment] = useState({});
+  const [newcomment, setnewcomment] = useState({});
 
-        this.newevent = {}
+  const posteditref = createRef()
+  const addcommentref = createRef()
+  const editcommentref = createRef()
+  const deleteref = createRef()
 
-        this.state = {
-          demodatabase: {
-            details: "",
-            comments: [ { "id" : "ttr", "commenter" : "user 1", "comment" : "Good" }, { "id" : "tts", "commenter" : "user 2", "comment" : "Good 2" }, { "id" : "ttt", "commenter" : "user 3", "comment" : "Good 3" } ]
-          },
-          isAdministrator: localStorage.getItem('posts-app-demo.administrator'),
-          showEditor: false,
-          post: ''
-        }
+  //delete comment should be test
+  //async await should be used
 
-        console.log('details constructed', this.state)
+  const myfetch = async (url, method, object) => {
+    return await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(object)
+    })
+  }
 
-        this.editref = createRef()
-        this.editcommentref = createRef()
-        this.deleteref = createRef()
+  const onAddComment = async (e) => {
+    e.preventDefault()
+    // run in demo only
+    alert('Comment added')
+    addcommentref.current.close()
+    // update by state instead of http or websocket events
+    setdemodatabase({...demodatabase, comments: [...demodatabase.comments, newcomment]})
+    // not run in non-demo only
+    return
+    // post id hardcoded for demo only, should get from database post id
+    let postid = "61ce3346ada85c25e7c3ca5f"
+    let response = await myfetch('http://localhost:8000/comments/' + postid, 'POST', newcomment)
+    if (response.status === 201) {
+      alert('Comment added')
+      addcommentref.current.close()
+      // update by http instead of websocket
+      updateDetails()
+    } else alert('Error: ' + response.statusText)
+  }
 
-        const queryParams = new URLSearchParams(window.location.search);
-        this.postid = queryParams.get('id');
-
-    }
-
-    shouldComponentUpdate (last, news) {
-        return true
-    }
-
-    updateDetails () {
-        console.log('get details')
-        //demo
-        this.setState({demodatabase: {details:"Details ...."}})
-        return
-        return fetch('http://localhost:8000/posts/details/myid', {
-          method: 'GET'
-        })
-          .then(data => data.json())
-          .then((res)=>{
-              console.log('details', res)
-              
-              //this.setState({post: res})
-            })
-          .catch(err=>{
-              alert('Error')
-          })
-    }
-
-    componentDidMount () {
-        console.log('did mount')
-        this.updateDetails()
-        client.onopen = () => {
-            console.log("Websocket client connected")
-          }
-        client.onmessage = (m) => {
-            console.log("onmessage", m)
-            const message = JSON.parse(m.data)
-            console.log("got reply! ", message)
-
-            // for add & update only
-            const event = message.message
-
-            if (message.type === 'addevent') this.setState(prevState => ({
-                posts: {
-                    ...prevState.posts,
-                    [event._id]: event 
-                }
-            }))
-            else if (message.type === 'updateevent') this.setState(prevState => ({
-                posts: {
-                    ...prevState.posts,
-                    [event._id]: event 
-                }
-            }))
-            else if (message.type === 'deleteevent') {
-                var posts = this.state.posts
-                delete posts[message.message._id]
-                this.setState({posts: posts})
-            }
-        }
-        client.onclose = () => {
-            alert("Error: websocket closed!")
-        }
-    }
-
-    sendMessage = (type, message) => {
-        console.log("Sending message")
-        client.send(JSON.stringify({
-          type: type,
-          msg: message
-        }))
-      }
-
-    onSubmit = (e) => {
-        e.preventDefault()
+  const onDeleteSelectedComment = async (event) => {
         
-        fetch('http://localhost:8000/posts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(this.newevent)
-        })
-          .then(data => {
-              if (data.status === 201) {
-                alert('Event added')
-                this.formref.current.close()
-              }
-              else
-                alert('Error: ' + data.statusText)
-            })
-          .catch(err=>{
-              alert('Error')
-          })
-    }
+    // only in demo
+    alert('comment deleted')
+    //update by state
+    setdemodatabase({...demodatabase, comments: demodatabase.comments.filter((comment)=>comment.id !== commenttodelete.id)})
+    deleteref.current.close()
 
-    onSave = (e) => {
-        e.preventDefault()
-        
-        fetch('http://localhost:8000/posts/' + this.state.post._id, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(this.state.editedpost)
-        })
-          .then(data => {
-              console.log("data", data)
-              if (data.status === 200) {
-                alert('Event updated')
-                this.editref.current.close()
-                this.updateDetails()
-              }
-              else
-                alert('Error: ' + data.statusText)
-            })
-          .catch(err=>{
-              alert('Error')
-          })
+    // only in non-demo
+    return
+    let response = await myfetch('http://localhost:8000/comments/' + commenttodelete.id, 'DELETE', {})
+    if (response.status === 200) {
+      alert('comment deleted')
+      setdemodatabase({...demodatabase, comments: demodatabase.comments.filter((comment)=>comment.id !== commenttodelete.id)})
+      deleteref.current.close()
     }
+    else
+      alert('Error: ' + response.statusText)
+  }
 
+  const onSave = async (e) => {
+    e.preventDefault()
+
+    //demo
+    alert('Post updated')
+    posteditref.current.close()
+
+    console.log('new state', demodatabase)
+    setdemodatabase({...demodatabase, post: editedpost})
     
-
-    onSaveComment = (e) => {
-      e.preventDefault()
-      
-      fetch('http://localhost:8000/comments/' + this.state.editedcomment._id, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(this.state.editedcomment)
-      })
-        .then(data => {
-            console.log("data", data)
-            if (data.status === 200) {
-              alert('Comment updated')
-              this.editcommentref.current.close()
-              //demo
-              this.setState(pstate=>{
-                const index = pstate.demodatabase.comments.findIndex(comment=>comment.id === this.state.editedcomment.id)
-                pstate.demodatabase.comments[index] = this.state.editedcomment
-                return {demodatabase: pstate.demodatabase}
-              })
-              console.log('newstate', this.state)
-              //this.updateDetails()
-            }
-            else
-              alert('Error: ' + data.statusText)
-          })
-        .catch(err=>{
-            alert('Error')
-        })
+    // save to database
+    return
+    let response = await myfetch('http://localhost:8000/posts/' + demodatabase.post._id, 'PUT', editedpost)
+    console.log("response", response)
+    if (response.status === 200) {
+      alert('Post updated')
+      posteditref.current.close()
+      this.updateDetails()
+    }
+    else
+      alert('Error: ' + response.statusText)
   }
 
-    onDelete = (event) => {
-        
-        fetch('http://localhost:8000/posts/' + event._id, {
-          method: 'DELETE'
-        })
-          .then(data => {
-              console.log("data", data)
-              if (data.status === 200) {
-                alert('Event deleted')
-                this.updateDetails()
-              }
-              else
-                alert('Error: ' + data.statusText)
-            })
-          .catch(err=>{
-              alert('Error')
-          })
-    }
+  const onSaveComment = async (e) => {
+    e.preventDefault()
 
-    onDeleteSelectedComment = (event) => {
-        
-      fetch('http://localhost:8000/comments/' + this.state.editedcomment.id, {
-        method: 'DELETE'
-      })
-        .then(data => {
-            console.log("data", data)
-            if (data.status === 200) {
-              alert('comment deleted')
-              //demo
-              this.setState(pstate=>{
-                console.log('find by id', this.state.editedcomment.id)
-                const index = pstate.demodatabase.comments.findIndex(comment=>comment.id === this.state.editedcomment.id)
-                pstate.demodatabase.comments.splice(index, 1)
-                return ({demodatabase: pstate.demodatabase})
-              })
-              this.deleteref.current.close()
-            }
-            else
-              alert('Error: ' + data.statusText)
-          })
-        .catch(err=>{
-            alert('Error')
-        })
+    // only in demo
+    alert('Comment updated')
+    editcommentref.current.close()
+    setdemodatabase({...demodatabase, comments: demodatabase.comments.map((comment)=>comment.id === editedcomment.id?editedcomment:comment)})
+    
+    // only in non-demo
+    return
+    let response = await myfetch('http://localhost:8000/comments/' + editedcomment._id, 'PUT', editedcomment)
+    console.log("response", response)
+    if (response.status === 200) {
+      alert('Comment updated')
+      editcommentref.current.close()
+      setdemodatabase({...demodatabase, comments: demodatabase.comments.map((comment)=>comment.id === editedcomment.id?editedcomment:comment)})
+      updateDetails()
+    }
+    else
+      alert('Error: ' + response.statusText)
   }
 
-    formatDate (date) {
-        console.log('format', date)
-        if (date)
-            return moment(date).format('D MMMM YYYY')
-        else return ""
-    }
+  const updateDetails = async () => {
+    console.log('get details')
+    //for non-demo
+    return
+    let response = await myfetch('http://localhost:8000/posts/details/myid', 'GET', {})
+    if (response.status === 200) setdemodatabase(response.json())
+    else alert('Error:' + response.status)
+  }
 
-    formatTime (time) {
-        console.log('format time', time)
-        if (time)
-            return moment(time, 'HH:mm').format('h:mm a')
-        else return ""
-    }
-
-    render() {
-        console.log('post', this.state.post)
-        return (
-            <div className='mybox' style={{position:'relative', width:'90%'}}>
-                {this.state.isAdministrator=='true'?<FaEdit className='clickable' style={{position:'absolute', color:'blue', right:'10px', top:'10px'}} onClick={()=>{
-                  this.setState({editedpost: Object.assign({}, this.state.post)})
-                  this.editref.current.open()
-                  }} />:null}
-                <h1>{this.state.post.title}</h1>
-                <div>{this.state.demodatabase.details}</div>
-                <h2 style={{marginTop:'20px'}}>Comments</h2>
-                <div style={{}}>
-                  {this.state.post?Object.keys(this.state.demodatabase.comments).map((key, i)=>{
-                    return (
-                      <div className='mybox' style={{position:'relative'}}>
-                        {this.state.isAdministrator=='true'?<div><FaEdit className='clickable' style={{position:'absolute', color:'blue', right:'30px', top:'10px'}} onClick={()=>{
-                  this.setState({editedcomment: Object.assign({}, this.state.demodatabase.comments[i])})
-                  this.editcommentref.current.open()
-                  }} /><FaTrashAlt className='clickable' style={{position:'absolute', color:'red', right:'10px', top:'10px'}} onClick={()=>{
-                    this.state.editedcomment = this.state.demodatabase.comments[i]
-                    this.deleteref.current.open()
-                  }} /></div>:null}
-                        <h5>{this.state.demodatabase.comments[i].commenter}</h5>
-                        <div>{this.state.demodatabase.comments[i].comment}</div>
-                      </div>
-                    )
-                  }):null}
+  return (
+    <div className='mybox' style={{position:'relative', width:'90%'}}>
+        {isAdministrator=='true'?<FaEdit className='clickable' style={{position:'absolute', color:'blue', right:'10px', top:'10px'}} onClick={()=>{
+          seteditedpost(Object.assign({}, demodatabase.post))
+          posteditref.current.open()
+          }} />:null}
+        <h1>{demodatabase.post.title}</h1>
+        <div>{demodatabase.post.details}</div>
+        <h2 style={{marginTop:'20px'}}>Comments</h2>
+        <div className='mybox'>
+          <button className='mybutton' onClick={()=>{
+            setnewcomment({})
+            addcommentref.current.open()
+            }}>Add Comment</button>
+          <div style={{}}>
+            {demodatabase.post?Object.keys(demodatabase.comments).map((key, i)=>{
+              console.log('map', demodatabase.comments[key])
+              return (
+                <div className='mybox' style={{position:'relative'}}>
+                  {isAdministrator=='true'?<div><FaEdit className='clickable' style={{position:'absolute', color:'blue', right:'30px', top:'10px'}} onClick={()=>{
+            seteditedcomment(demodatabase.comments[i])
+            editcommentref.current.open()
+            }} /><FaTrashAlt className='clickable' style={{position:'absolute', color:'red', right:'10px', top:'10px'}} onClick={()=>{
+              setcommenttodelete(demodatabase.comments[i])
+              deleteref.current.open()
+            }} /></div>:null}
+                  <h5>{demodatabase.comments[i].commenter}</h5>
+                  <div>{demodatabase.comments[i].comment}</div>
                 </div>
-                <Popup ref={this.deleteref} className='flexCenter' modal nested>
-                  <div style={{padding:'20px'}}>
-                    <h2 style={{textAlign:'center'}}>Are you sure want to delete this comment?</h2>
-                    <div style={{display:'flex', justifyContent:'center'}}>
-                      <button className='mybutton' onClick={this.onDeleteSelectedComment}>Yes</button>
-                      <button className='mybutton redbutton' onClick={()=>this.deleteref.current.close()}>No</button>
-                    </div>
-                  </div>
-                </Popup>
-                <Popup ref={this.editref} modal nested>
-                      <div>
-                          <form className='flexCenter' onSubmit={this.onSave} style={{padding:'20px'}}>
-                              <h3 style={{margin: '10px'}}>Edit Post</h3>
-                              <table style={{width:'100%'}}>
-                                  <tbody>
-                                      <tr>
-                                          <td>Title</td>
-                                          <td><input type="text" placeholder='Title' value={this.state.editedpost?this.state.editedpost.title:''} className='form-control' onChange={(e)=>{
-                                              this.state.editedpost.title = e.target.value
-                                              this.setState({editedpost: Object.assign({}, this.state.editedpost)})
-                                            }} /></td>
-                                      </tr>
-                                      <tr>
-                                          <td>Description</td>
-                                          <td><input type="text" placeholder='Description...' value={this.state.editedpost?this.state.editedpost.detail:''} className='form-control' onChange={(e)=>{
-                                              this.state.editedpost.detail = e.target.value
-                                              this.setState({editedpost: Object.assign({}, this.state.editedpost)})
-                                            }} /></td>
-                                      </tr>
-                                  </tbody>
-                              </table>
-                              <button type='submit' className='mybutton'>Save</button>
-                          </form>
-                          
-                      </div>
-                  </Popup>
-                  <Popup ref={this.editcommentref} modal nested>
-                      <div>
-                          <form className='flexCenter' onSubmit={this.onSaveComment} style={{padding:'20px'}}>
-                              <h3 style={{margin: '10px'}}>Edit Comment</h3>
-                              <table style={{width:'100%'}}>
-                                  <tbody>
-                                      <tr>
-                                          <td>Title</td>
-                                          <td><input type="text" placeholder='Commenter' value={this.state.editedcomment?this.state.editedcomment.commenter:''} className='form-control' onChange={(e)=>{
-                                              this.state.editedcomment.commenter = e.target.value
-                                              this.setState({editedcomment: Object.assign({}, this.state.editedcomment)})
-                                            }} /></td>
-                                      </tr>
-                                      <tr>
-                                          <td>Description</td>
-                                          <td><input type="text" placeholder='Comment' value={this.state.editedcomment?this.state.editedcomment.comment:''} className='form-control' onChange={(e)=>{
-                                              this.state.editedcomment.comment = e.target.value
-                                              this.setState({editedcomment: Object.assign({}, this.state.editedcomment)})
-                                            }} /></td>
-                                      </tr>
-                                  </tbody>
-                              </table>
-                              <button type='submit' className='mybutton'>Save</button>
-                          </form>
-                          
-                      </div>
-                  </Popup>
-
+              )
+            }):null}
+          </div>
+        </div>
+        <Popup ref={deleteref} className='flexCenter' modal nested>
+          <div style={{padding:'20px'}}>
+            <h2 style={{textAlign:'center'}}>Are you sure want to delete this comment?</h2>
+            <div style={{display:'flex', justifyContent:'center'}}>
+              <button className='mybutton' onClick={onDeleteSelectedComment}>Yes</button>
+              <button className='mybutton redbutton' onClick={()=>deleteref.current.close()}>No</button>
             </div>
-        );
-    }
+          </div>
+        </Popup>
+        <Popup ref={posteditref} modal nested>
+              <div>
+                  <form className='flexCenter' onSubmit={onSave} style={{padding:'20px'}}>
+                      <h3 style={{margin: '10px'}}>Edit Post</h3>
+                      <table style={{width:'100%'}}>
+                          <tbody>
+                              <tr>
+                                  <td>Title</td>
+                                  <td><input type="text" placeholder='Title' value={editedpost?editedpost.title:''} className='form-control' onChange={(e)=>{
+                                      editedpost.title = e.target.value
+                                      seteditedpost(Object.assign({}, editedpost))
+                                    }} /></td>
+                              </tr>
+                              <tr>
+                                  <td>Description</td>
+                                  <td><input type="text" placeholder='Description...' value={editedpost?editedpost.details:''} className='form-control' onChange={(e)=>{
+                                      seteditedpost({...editedpost, details: e.target.value})
+                                    }} /></td>
+                              </tr>
+                          </tbody>
+                      </table>
+                      <button type='submit' className='mybutton'>Save</button>
+                  </form>
+                  
+              </div>
+          </Popup>
+          <Popup ref={editcommentref} modal nested>
+              <div>
+                  <form className='flexCenter' onSubmit={onSaveComment} style={{padding:'20px'}}>
+                      <h3 style={{margin: '20px'}}>Edit Comment</h3>
+                      <table style={{width:'100%'}}>
+                          <tbody>
+                              <tr>
+                                  <td>Name</td>
+                                  <td><input type="text" placeholder='Commenter' value={editedcomment?editedcomment.commenter:''} className='form-control' onChange={(e)=>{
+                                      seteditedcomment({...editedcomment, commenter: e.target.value})
+                                    }} /></td>
+                              </tr>
+                              <tr>
+                                  <td>Comment</td>
+                                  <td><input type="text" placeholder='Comment' value={editedcomment?editedcomment.comment:''} className='form-control' onChange={(e)=>{
+                                      seteditedcomment({...editedcomment, comment: e.target.value})
+                                    }} /></td>
+                              </tr>
+                          </tbody>
+                      </table>
+                      <button type='submit' className='mybutton'>Save</button>
+                  </form>
+                  
+              </div>
+          </Popup>
+          
+          <Popup ref={addcommentref} modal nested>
+              <div>
+                  <form className='flexCenter' onSubmit={onAddComment} style={{padding:'20px'}}>
+                      <h3 style={{margin: '20px'}}>Add Comment</h3>
+                      <table style={{width:'100%'}}>
+                          <tbody>
+                              <tr>
+                                  <td>Name</td>
+                                  <td><input type="text" placeholder='Your name' value={newcomment?newcomment.commenter:''} className='form-control' onChange={(e)=>{
+                                      setnewcomment({...newcomment, commenter: e.target.value})
+                                    }} /></td>
+                              </tr>
+                              <tr>
+                                  <td>Comment</td>
+                                  <td><input type="text" placeholder='Your comment...' value={newcomment?newcomment.comment:''} className='form-control' onChange={(e)=>{
+                                      setnewcomment({...newcomment, comment: e.target.value})
+                                    }} /></td>
+                              </tr>
+                          </tbody>
+                      </table>
+                      <button type='submit' className='mybutton'>Add</button>
+                  </form>
+                  
+              </div>
+          </Popup>
+
+    </div>
+  );
 }
 
-export default PostDetails;
+export default Postdetails;

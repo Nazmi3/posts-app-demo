@@ -167,9 +167,10 @@ const Posts = () => {
             <h3 style={{margin: '20px', color:'whitesmoke'}}>Posts</h3>
             <div>
                 {Object.keys(posts).map((key, i)=>{
+                    console.log('map', posts[key])
                     return (
-                        <div className='mybox clickable' key={posts[key]._id} onClick={()=>{
-                            navigate('/posts/details?id='+posts[key]._id)
+                        <div className='mybox clickable' key={posts[key].id} onClick={()=>{
+                            navigate('/posts/details?id='+posts[key].id)
                             //window.location.href='/posts/details?id='+posts[key]._id
                             }}>
                             <div className='postTitle'>{posts[key].title}</div>
