@@ -28,6 +28,9 @@ const Postdetails = () => {
   const editcommentref = createRef()
   const deleteref = createRef()
 
+  //delete comment should be test
+  //async await should be used
+
   const myfetch = async (url, method, object) => {
     return await fetch(url, {
       method: method,
@@ -40,11 +43,11 @@ const Postdetails = () => {
 
   const onAddComment = async (e) => {
     e.preventDefault()
-    // run in demo only, update by state instead of http or websocket events
-    addcommentref.current.close()
-    setdemodatabase({...demodatabase, comments: [...demodatabase.comments, newcomment]})
+    // run in demo only
     alert('Comment added')
-
+    addcommentref.current.close()
+    // update by state instead of http or websocket events
+    setdemodatabase({...demodatabase, comments: [...demodatabase.comments, newcomment]})
     // not run in non-demo only
     return
     // post id hardcoded for demo only, should get from database post id
