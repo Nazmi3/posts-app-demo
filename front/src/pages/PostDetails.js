@@ -32,6 +32,7 @@ const Postdetails = () => {
     return await fetch(url, {
       method: method,
       headers: {
+        'Authorization': 'Bearer demotoken',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(object)
