@@ -28,9 +28,6 @@ const Postdetails = () => {
   const editcommentref = createRef()
   const deleteref = createRef()
 
-  //delete comment should be test
-  //async await should be used
-
   const myfetch = async (url, method, object) => {
     return await fetch(url, {
       method: method,
